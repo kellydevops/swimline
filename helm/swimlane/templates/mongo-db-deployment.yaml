@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.dbName }}-deployment
+  name: {{ .Values.dbName }}-deployment
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.dbName }}-deployment
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ .Values.dbName }}-deployment
+    spec:
+      containers:
+        - image: {{ .Values.deployment.imageMongo }}:{{ .Values.deployment.tag }}
+          name: {{ .Values.dbName }}-deployment
+          ports:
+            - containerPort: {{ .Values.mongoPort }}
+          resources: {}
+          volumeMounts:
+            - mountPath: "/data/db"
+              name: {{ .Values.dbName }}
+          env:
+          - name: MONGO_INITDB_ROOT_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: mongo-creds
+                key: username
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mongo-creds
+                key: password
+      restartPolicy: Always
+      volumes:
+        - name: {{ .Values.dbName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.dbName }}
+status: {}
